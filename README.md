@@ -23,6 +23,7 @@ This repository contains the code used for the Cedarville AutoNav 2023 robot. Th
 - /NorthPointFirst:           set depending on direction going in course
 - /GpsExitHeading:            comment shows what value to set based on going north south, this will have to be tweaked at location for return to line
 - /CrossRampInGps:            True for cross in GPS or False for line following - line following untested
+- /RepeatGps:                 False for real course, True to stay in GPS mode and repeat the waypoints indefinitely - used for testing/debug
 - /LineDist:                  distance in meters to follow from line
 
 ## Packages and Nodes

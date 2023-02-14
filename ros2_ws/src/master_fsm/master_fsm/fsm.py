@@ -19,6 +19,7 @@ from std_msgs.msg import Int32
 from std_msgs.msg import String
 from custom_msgs.msg import HeadingStatus
 from custom_msgs.msg import LightCmd
+from custom_msgs.msg import EncoderData
 
 
 class MainRobot(Node):
@@ -78,6 +79,35 @@ class MainRobot(Node):
         self.gps_exit_heading = self.get_parameter('/GpsExitHeading').value
         self.waypoint_count = 0
 
+        # Encoder box following setup
+        if self.get_parameter("/StartState").value == STATE.ENCODER_BOX_FOLLOW_STRAIGHT:
+            # get the encoder parameters
+            self.declare_parameter('/EncoderBoxTurnLeft', True)
+            self.declare_parameter('/EncoderBoxDistance', 0.3)
+            self.declare_parameter('/EncoderBoxSpeed', 4.0)
+
+            # subscribe to the encoder data
+            self.encoder_sub = self.create_subscription(EncoderData, "encoder_data", self.encoder_callback, 10)
+            
+            # initialize our variables
+            self.encoder_straight_increment = meters_to_ticks(self.get_parameter('/EncoderBoxDistance').value)
+            if self.get_parameter('/EncoderBoxTurnLeft').value:
+                self.encoder_turn_increment_left = 0
+                self.encoder_turn_increment_right = meters_to_ticks(math.pi/2*0.6096)
+            else:
+                self.encoder_turn_increment_left = meters_to_ticks(math.pi/2*0.6096)
+                self.encoder_turn_increment_right = 0
+            self.encoder_left_target = self.encoder_straight_increment
+            self.encoder_right_target = self.encoder_straight_increment
+
+            # init the encoder data storage
+            self.encoder_left = 0.0
+            self.encoder_right = 0.0
+            self.encoder_left_raw = 0
+            self.encoder_right_raw = 0
+
+            self.encoder_straight_threshold = 20
+
         # Make a timer object for calling the change state periodically
         self.timer = self.create_timer(self.get_parameter('/TimerRate').value, self.timer_callback)
 
@@ -93,7 +123,10 @@ class MainRobot(Node):
         self.lights_pub.publish(light_msg)
 
         if self.waypoint_found:  # reached gps waypoint - switch to gps navigation
-            self.waypoint_count += 1
+            if self.get_parameter('/RepeatGps'):
+                self.waypoint_count = (self.waypoint_count + 1) % 4
+            else:
+                self.waypoint_count += 1
             self.waypoint_found = False
             self.exit_heading = self.target_heading
             # self.state = STATE.ORIENT_TO_GPS
@@ -125,7 +158,10 @@ class MainRobot(Node):
         # self.get_logger().info("Object Avoidance From Line Following State")
         # Check for another object in front of the robot
         if self.waypoint_found:  # reached gps waypoint - switch to gps navigation
-            self.waypoint_count += 1
+            if self.get_parameter('/RepeatGps'):
+                self.waypoint_count = (self.waypoint_count + 1) % 4
+            else:
+                self.waypoint_count += 1
             self.waypoint_found = False
             self.exit_heading = self.target_heading
             self.heading_restored = False
@@ -196,7 +232,10 @@ class MainRobot(Node):
         # self.lights_pub.publish(light_msg)
 
         if self.waypoint_found:
-            self.waypoint_count += 1
+            if self.get_parameter('/RepeatGps'):
+                self.waypoint_count = (self.waypoint_count + 1) % 4
+            else:
+                self.waypoint_count += 1
             self.waypoint_found = False
             self.get_logger().info("WAYPOINT FOUND IN FSM!!")
 
@@ -248,7 +287,10 @@ class MainRobot(Node):
                               f"{(-1 + 2*int(self.follow_dir==DIRECTION.LEFT)) * self.TURN_SPEED}")
 
         if self.waypoint_found:
-            self.waypoint_count += 1
+            if self.get_parameter('/RepeatGps'):
+                self.waypoint_count = (self.waypoint_count + 1) % 4
+            else:
+                self.waypoint_count += 1
 
             self.waypoint_found = False
             self.state = STATE.GPS_TO_OBJECT
@@ -268,7 +310,6 @@ class MainRobot(Node):
     def object_to_line_state(self):
         # self.get_logger().info("Object to Line Transition State")
 
-
         # Gradual Turn
         self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.SLIGHT_TURN}," \
                             f"{round((1-2*int(self.follow_dir==DIRECTION.RIGHT)) * (self.SLIGHT_TURN))}"
@@ -279,7 +320,6 @@ class MainRobot(Node):
 
         # Just keep turning until we are parallel with the line
         if self.aligned:
-
             self.aligned = False
             self.state_msg.data = STATE.LINE_FOLLOWING
             self.state_pub.publish(self.state_msg)
@@ -383,7 +423,6 @@ class MainRobot(Node):
             self.gps_to_object_state()
 
     def gps_exit_state(self):
-
         self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{8},{15*(-1+2*int(self.follow_dir==DIRECTION.RIGHT))}"
         self.wheel_pub.publish(self.wheel_msg)
 
@@ -401,6 +440,59 @@ class MainRobot(Node):
             self.state_pub.publish(self.state_msg)
             self.line_to_object_state()
     # End of Transition States
+
+    # Debug / Testing States
+    def encoder_box_follow_straight_state(self):
+        self.get_logger().info(f"straight: now left: {self.encoder_left_raw}, target left: {self.encoder_left_target},now right: {self.encoder_right_raw}, target right: {self.encoder_right_target}")
+        if self.encoder_left_raw < self.encoder_left_target or self.encoder_right_raw < self.encoder_right_target:
+            # test to make sure we're adjusting if we're not going straight
+            delta_left = self.encoder_left_target - self.encoder_left_raw
+            delta_right = self.encoder_right_target - self.encoder_right_raw
+            
+            if (delta_right < delta_left - self.encoder_straight_threshold):
+                # we're too far right
+                # decrease right wheel speed -> turn right slightly
+                self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.get_parameter('/EncoderBoxSpeed').value},{1}"
+                self.wheel_pub.publish(self.wheel_msg)
+            elif (delta_left < delta_right - self.encoder_straight_threshold):
+                # we're too far left
+                # decrease left wheel speed -> turn left slightly
+                self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.get_parameter('/EncoderBoxSpeed').value},{-1}"
+                self.wheel_pub.publish(self.wheel_msg)
+            else:
+                self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.get_parameter('/EncoderBoxSpeed').value},{0}"
+                self.wheel_pub.publish(self.wheel_msg)
+        else:
+            # time to transition states
+            # adjust targets
+            self.encoder_left_target += self.encoder_turn_increment_left
+            self.encoder_right_target += self.encoder_turn_increment_right
+            # send updated command to motors
+            self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.get_parameter('/EncoderBoxSpeed').value},{self.get_parameter('/EncoderBoxSpeed').value*(-2*(self.get_parameter('/EncoderBoxTurnLeft').value)+1)}"
+            self.wheel_pub.publish(self.wheel_msg)
+            # change state
+            self.state = STATE.ENCODER_BOX_FOLLOW_TURN
+            self.encoder_box_follow_turn_state()
+
+    def encoder_box_follow_turn_state(self):
+        self.get_logger().info(f"turn: now left: {self.encoder_left_raw}, target left: {self.encoder_left_target},now right: {self.encoder_right_raw}, target right: {self.encoder_right_target}")
+
+        if (self.get_parameter('/EncoderBoxTurnLeft').value and self.encoder_right_raw < self.encoder_right_target) or (not self.get_parameter('/EncoderBoxTurnLeft').value and self.encoder_left_raw < self.encoder_left_target):
+            # don't do anything...
+            self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.get_parameter('/EncoderBoxSpeed').value},{self.get_parameter('/EncoderBoxSpeed').value * (-2 * (self.get_parameter('/EncoderBoxTurnLeft').value) + 1)}"
+            self.wheel_pub.publish(self.wheel_msg)
+        else:
+            # time to transition states
+            # adjust targets
+            self.encoder_left_target += self.encoder_straight_increment
+            self.encoder_right_target += self.encoder_straight_increment
+            # send an updated command to the motors
+            self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.get_parameter('/EncoderBoxSpeed').value},{0}"
+            self.wheel_pub.publish(self.wheel_msg)
+            # change state
+            self.state = STATE.ENCODER_BOX_FOLLOW_STRAIGHT
+            self.encoder_box_follow_straight_state()
+        pass
 
     # This function is essentially a big state machine handling transitions
     # between a number of different states in the system.
@@ -428,8 +520,14 @@ class MainRobot(Node):
             self.orient_to_gps_state()
         elif self.state == STATE.GPS_EXIT:
             self.gps_exit_state()
+        elif self.state == STATE.ENCODER_BOX_FOLLOW_STRAIGHT:
+            self.encoder_box_follow_straight_state()
+        elif self.state == STATE.ENCODER_BOX_FOLLOW_TURN:
+            self.encoder_box_follow_turn_state()
         else:
             self.get_logger().info("Error: Invalid State")
+
+        self.get_logger().info(f"fsm: current state is {self.state}")
 
     # End of State Machine
 
@@ -476,7 +574,6 @@ class MainRobot(Node):
 
     # Callback for information coming from the line following node
     def line_callback(self, line_event):
-
         # self.get_logger().info("Message from Line Following Node")
 
         # Get the lock before proceeding
@@ -561,6 +658,12 @@ class MainRobot(Node):
         finally:
             # Release the lock
             self.lock.release()
+
+    def encoder_callback(self, data):
+        self.encoder_left = data.left
+        self.encoder_right = data.right
+        self.encoder_left_raw = data.left_raw
+        self.encoder_right_raw = data.right_raw
 
     # Callback for the timer
     def timer_callback(self):

@@ -36,6 +36,11 @@ class SensorMsg:
 class GPS(Node):
     def __init__(self):
         super().__init__("gps")
+        
+        self.declare_parameter('/SensorInput', 0)
+        self.declare_parameter('/InputInitialCondition', False)
+        self.declare_parameter('/InitialLat', 0.0)
+        self.declare_parameter('/InitialLon', 0.0)
         self.declare_parameter('/WaypointLat1', 0.0)
         self.declare_parameter('/WaypointLon1', 0.0)
         self.declare_parameter('/WaypointLat2', 0.0)
@@ -51,6 +56,8 @@ class GPS(Node):
         self.declare_parameter('/FollowingDirection', DIRECTION.RIGHT)
         self.declare_parameter('/NorthPointFirst', False)
         self.declare_parameter('/RealCourse', False)
+        self.declare_parameter('/PracticeInitialLat', 0.0)
+        self.declare_parameter('/PracticeInitialLon', 0.0)
         self.declare_parameter('/PracticeWaypointLat1', 0.0)
         self.declare_parameter('/PracticeWaypointLon1', 0.0)
         self.declare_parameter('/PracticeWaypointLat2', 0.0)
@@ -73,6 +80,8 @@ class GPS(Node):
             WP_LON3 = self.get_parameter('/WaypointLon3').value
             WP_LAT4 = self.get_parameter('/WaypointLat4').value
             WP_LON4 = self.get_parameter('/WaypointLon4').value
+            IC_LAT  = self.get_parameter('/InitialLat').value
+            IC_LON  = self.get_parameter('/InitialLon').value
 
             self.target_loc.append(complex(WP_LAT1, WP_LON1))
             self.target_loc.append(complex(WP_LAT2, WP_LON2))
@@ -81,15 +90,14 @@ class GPS(Node):
         else:
             WP_LAT1 = self.get_parameter('/PracticeWaypointLat1').value
             WP_LON1 = self.get_parameter('/PracticeWaypointLon1').value
-
-            # get middle
             WP_LAT2 = self.get_parameter('/PracticeWaypointLat2').value
             WP_LON2 = self.get_parameter('/PracticeWaypointLon2').value
             WP_LAT3 = self.get_parameter('/PracticeWaypointLat3').value
             WP_LON3 = self.get_parameter('/PracticeWaypointLon3').value
-
             WP_LAT4 = self.get_parameter('/PracticeWaypointLat4').value
             WP_LON4 = self.get_parameter('/PracticeWaypointLon4').value
+            IC_LAT  = self.get_parameter('/PracticeInitialLat').value
+            IC_LON  = self.get_parameter('/PracticeInitialLon').value
 
             self.target_loc.append(complex(WP_LAT1, WP_LON1))
             self.target_loc.append(complex(WP_LAT2, WP_LON2))
@@ -120,7 +128,10 @@ class GPS(Node):
 
         # position in gps rounds
         self.waypoint_itr = 0
-        self.past_loc = self.take_reading()
+        if self.get_parameter('/InputInitialCondition').value:
+            self.past_loc = complex(IC_LAT, IC_LON)
+        else:
+            self.past_loc = self.take_reading()
         # self.target_loc.append(self.past_loc)  # set initial position as end goal
         self.moving_avg = np.zeros((5,), dtype=np.float32)
         self.moving_avg_idx = 0
@@ -202,30 +213,33 @@ class GPS(Node):
     # this function will read from the gps a single nmea sentence
     # and return a lat, long complex pair
     def take_reading(self):
-        while True:
-            try:
-                line = self.ser.readline().decode()
-                message = line.split(',')
-                if message[0] == '$GNGGA':
-                    lat = float(message[2]) / 100 * (-1 + 2 * int(message[3] == 'N'))
-                    lon = float(message[4]) / 100 * (-1 + 2 * int(message[5] == 'E'))
-                    self.get_logger().warning(f"FOUND GNGGA FIX {lat}, {lon}")
-                    self.log_gps(message)
-                    return complex(lat, lon)
-                elif message[0] == "$GNRMC":
-                    lat = float(message[3]) / 100 * (-1 + 2 * int(message[4] == 'N'))
-                    lon = float(message[5]) / 100 * (-1 + 2 * int(message[6] == 'E'))
-                    self.get_logger().warning(f"FOUND GNRMC FIX {lat}, {lon}")
-                    return complex(lat, lon)
-                # elif message[0] == "$GNGLL":
-                #     lat = float(message[1]) / 100 * (-1 + 2 * int(message[2] == 'N'))
-                #     lon = float(message[3]) / 100 * (-1 + 2 * int(message[4] == 'E'))
-                #     # self.get_logger().warning(f"FOUND GNRMC FIX {lat}, {lon}")
-                #     return complex(lat, lon)
-            except Exception as e:
-                # self.get_logger().warning(f"ERROR IN READING: {e}. Take robot outside")
-                pass
-                # time.sleep(1)
+        if self.get_parameter('/SensorInput').value == 0: # GPS
+            while True:
+                try:
+                    line = self.ser.readline().decode()
+                    message = line.split(',')
+                    if message[0] == '$GNGGA':
+                        lat = float(message[2]) / 100 * (-1 + 2 * int(message[3] == 'N'))
+                        lon = float(message[4]) / 100 * (-1 + 2 * int(message[5] == 'E'))
+                        self.get_logger().warning(f"FOUND GNGGA FIX {lat}, {lon}")
+                        self.log_gps(message)
+                        return complex(lat, lon)
+                    elif message[0] == "$GNRMC":
+                        lat = float(message[3]) / 100 * (-1 + 2 * int(message[4] == 'N'))
+                        lon = float(message[5]) / 100 * (-1 + 2 * int(message[6] == 'E'))
+                        self.get_logger().warning(f"FOUND GNRMC FIX {lat}, {lon}")
+                        return complex(lat, lon)
+                    # elif message[0] == "$GNGLL":
+                    #     lat = float(message[1]) / 100 * (-1 + 2 * int(message[2] == 'N'))
+                    #     lon = float(message[3]) / 100 * (-1 + 2 * int(message[4] == 'E'))
+                    #     # self.get_logger().warning(f"FOUND GNRMC FIX {lat}, {lon}")
+                    #     return complex(lat, lon)
+                except Exception as e:
+                    # self.get_logger().warning(f"ERROR IN READING: {e}. Take robot outside")
+                    pass
+                    # time.sleep(1)
+        elif self.get_parameter('/SensorInput') == 1: # shaft encoders
+            pass
 
 
     def state_callback(self, new_state):
