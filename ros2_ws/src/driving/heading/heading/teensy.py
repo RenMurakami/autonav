@@ -42,7 +42,6 @@ class Teensy(Node):
         self.declare_parameter('/LineBoostMargin', 30.0)
         self.declare_parameter('/GPSBoostMargin', 0.1745)
         self.declare_parameter('/Port', '/dev/ttyUSB0')
-        self.declare_parameter('/StartState', 0)
 
         self.serialPort = serial.Serial(self.get_parameter('/TeensyEncodersPort').value,
                                         self.get_parameter('/TeensyBaudrate').value, timeout=0.01)
@@ -84,40 +83,11 @@ class Teensy(Node):
         self.curr_linear = 0
         self.curr_angular = 0
         self.toggle = False
+        self.following_mode = FollowMode.eeLine
         self.STOP_LIMIT = 7777
-        self.state = self.get_parameter('/StartState').value
-        self.get_logger().info(f"start state: {self.state}")
+        self.state = STATE.LINE_FOLLOWING
         self.MAX_CHANGE = 5
         self.MAX_ANGULAR_CHANGE = 5
-
-        if self.state == STATE.GPS_TO_OBJECT or self.state == STATE.OBJECT_AVOIDANCE_FROM_GPS or \
-                self.state == STATE.LINE_TO_OBJECT or self.state == STATE.OBJECT_AVOIDANCE_FROM_LINE:
-            self.following_mode = FollowMode.eeObject
-            self.MAX_CHANGE = 4
-        elif self.state == STATE.LINE_FOLLOWING:
-            self.following_mode = FollowMode.eeLine
-            self.boost_count = 0
-            self.MAX_CHANGE = 4
-            # self.get_logger().info("SWITCHED TO LINE FOLLOWING")
-        elif self.state == STATE.GPS_NAVIGATION:
-            self.following_mode = FollowMode.eeGps
-            self.boost_count = 0
-            self.MAX_CHANGE = 5
-            # self.get_logger().info("SWITCHED TO GPS NAVIGATION")
-        elif self.state == STATE.OBJECT_TO_LINE or self.state == STATE.FIND_LINE or \
-                self.state == STATE.LINE_ORIENT or self.state == STATE.ORIENT_TO_GPS or \
-                self.state == STATE.GPS_EXIT or self.state == STATE.ENCODER_BOX_FOLLOW_STRAIGHT or \
-                self.state == STATE.ENCODER_BOX_FOLLOW_TURN:
-            self.following_mode = FollowMode.eeTransition
-            self.MAX_CHANGE = 2
-            self.boost_count = 0
-
-        self.serialPort.write('Q,**'.encode('utf-8'))
-        read = self.serialPort.readline().decode('utf-8')
-        data = read.split(',')
-        self.left_offset = -int(data[1])
-        self.right_offset = -int(data[2])
-
         self.serialPort.write("M,89,89,**".encode())
         # self.get_logger().info("WAIT: Enable power to motors")
         # x = input("Hit enter when ready to proceed")
@@ -147,9 +117,7 @@ class Teensy(Node):
             self.MAX_CHANGE = 5
             # self.get_logger().info("SWITCHED TO GPS NAVIGATION")
         elif self.state == STATE.OBJECT_TO_LINE or self.state == STATE.FIND_LINE or \
-                self.state == STATE.LINE_ORIENT or self.state == STATE.ORIENT_TO_GPS or \
-                self.state == STATE.GPS_EXIT or self.state == STATE.ENCODER_BOX_FOLLOW_STRAIGHT or \
-                self.state == STATE.ENCODER_BOX_FOLLOW_TURN:
+                self.state == STATE.LINE_ORIENT or self.state == STATE.ORIENT_TO_GPS or self.state == STATE.GPS_EXIT:
             self.following_mode = FollowMode.eeTransition
             self.MAX_CHANGE = 2
             self.boost_count = 0
@@ -169,7 +137,7 @@ class Teensy(Node):
             else:
                 linear = int(float(cmds[0]))
                 angular = int(float(cmds[1]))
-            #self.get_logger().info(f"FOLLOWING TRA with delta {angular}, speed {linear}")
+            # self.get_logger().info(f"FOLLOWING TRA with delta {angular}, speed {linear}")
         elif self.following_mode == FollowMode.eeLine and msg[:3] == CODE.LIN_SENDER:
             # self.get_logger().info(f"IN FOLLOW MODE: msg = {msg}")
             position = float(msg[4:])
@@ -308,8 +276,6 @@ class Teensy(Node):
                 msg = EncoderData()
                 msg.left = -left_dist
                 msg.right = -right_dist
-                msg.left_raw = -int(data[1]) - self.left_offset
-                msg.right_raw = -int(data[2]) - self.right_offset
                 self.encoder_pub.publish(msg)
             else:
                 self.serialPort.flushInput()
