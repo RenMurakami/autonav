@@ -322,19 +322,20 @@ class TransformPublisher(Node):
 
         # Display the final image
         cv2.imshow(numpydata)
+        morph = numpydata
 
         #*************************************************************
 
         detector = cv2.SimpleBlobDetector_create(params)
         keypoints = detector.detect(morph)  # find the blobs meeting the parameters
         self.circles = []
-        for hole in keypoints:
-            self.circles.insert(0, Circle(hole.pt[0], hole.pt[1], hole.size//2))
+        #for hole in keypoints:
+        #    self.circles.insert(0, Circle(hole.pt[0], hole.pt[1], hole.size//2))
 
         if self.get_parameter('/Debug').value:
             blobs = cv2.drawKeypoints(morph, keypoints, np.zeros((1, 1)), (0, 255, 0),
                                       cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-            cv_display(blobs, 'Potholes', self.window_handle)
+            #cv_display(blobs, 'Potholes', self.window_handle)
 
     def update_history(self, x):
         self.history[self.history_idx] = x
