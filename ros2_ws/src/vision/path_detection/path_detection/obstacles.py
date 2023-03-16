@@ -55,7 +55,7 @@ class TransformPublisher(Node):
         self.lidar_wheel_distance_pub = self.create_publisher(String, "wheel_distance", 10)
 
         # Subscribe to the camera color image and unaltered laser scan
-        #FIXME 
+        #FIXME
         self.get_logger().info('*1*********************')
         self.image_sub = self.create_subscription(Image, "/camera/color/image_raw", self.image_callback, 10)
         self.get_logger().info('*2*********************')
