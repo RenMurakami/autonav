@@ -35,7 +35,7 @@
         /LineDetectCropBottom:      .2
         /LineDetectCropSide:        .2
         /LineDetectDistance:        1.05
-        /Debug:                     False
+        /Debug:                     True
 
 
 /obstacles:

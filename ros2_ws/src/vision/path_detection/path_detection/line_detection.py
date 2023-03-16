@@ -48,7 +48,7 @@ class LineDetection():
         # Slice Edges
         image = image[int(y*self.CROP_TOP):-int(y*self.CROP_BOTTOM), int(x*self.CROP_SIDE):-int(x*self.CROP_SIDE)]
 
-        # cv_display(image, 'Line Detection Color Image', self.window_handle)
+        cv_display(image, 'Line Detection Color Image', self.window_handle)
 
         # Remove Shadows
         image = hsv_filter(image, use_white=not self.use_yellow)

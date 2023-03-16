@@ -55,7 +55,10 @@ class TransformPublisher(Node):
         self.lidar_wheel_distance_pub = self.create_publisher(String, "wheel_distance", 10)
 
         # Subscribe to the camera color image and unaltered laser scan
-        # self.image_sub = self.create_subscription(Image, "/camera/color/image_raw", self.image_callback, 10)
+        #FIXME 
+        self.get_logger().info('*1*********************')
+        self.image_sub = self.create_subscription(Image, "/camera/color/image_raw", self.image_callback, 10)
+        self.get_logger().info('*2*********************')
         self.lidar_sub = self.create_subscription(LaserScan, '/scan', self.lidar_callback, 10)
 
         # Subscribe to state updates for the robot
@@ -252,6 +255,7 @@ class TransformPublisher(Node):
 
     # receives camera image and parses potholes into history
     def image_callback(self, image):
+        self.get_logger().info('*4*********************')
         image = bridge_image(image, "bgr8")
         # slice edges
         y, x = image.shape[0], image.shape[1]
@@ -321,8 +325,9 @@ class TransformPublisher(Node):
                 cv2.circle(numpydata, (x, y), r, (0, 255, 0), 2)
 
         # Display the final image
-        cv2.imshow(numpydata)
+        cv2.imwrite('renTestImage',numpydata)
         morph = numpydata
+        self.get_logger().info('**********************')
 
         #*************************************************************
 
