@@ -24,8 +24,9 @@ from sensor_msgs.msg import LaserScan
 import cv2, csv
 
 #from google.colab.patches import cv2_imshow
-from PIL import Image, ImageOps
+#from PIL import Image, ImageOps
 from numpy import asarray
+from PIL import ImageOps
 from numpy import genfromtxt
 
 @dataclass
