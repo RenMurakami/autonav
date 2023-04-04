@@ -284,8 +284,8 @@ class TransformPublisher(Node):
 
 
         #***************************************************************
+        self.get_logger().info('*5*********************')
 
-        self.get_logger().info('**********************')
         t1 = time.time()
         kernel = np.ones((5,5),np.uint8)
         ksize = (5,5)
@@ -348,6 +348,8 @@ class TransformPublisher(Node):
         cv2.imwrite("originN.png", im_rgb)
         image = bridge_image(im_rgb, "bgr8")
         morph = im_rgb
+
+        self.get_logger().info('*6*********************')
 
         #*************************************************************
 
