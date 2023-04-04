@@ -11,6 +11,7 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import math
 import numpy as np
+from PIL import Image
 
 
 class STATE:
@@ -96,6 +97,8 @@ def bridge_image_pub(cv_image, format):
     except CvBridgeError as e:
         print("CvBridge could not convert images from OpenCV to ROS")
 
+def from_array(cv_image):
+    return Image.fromarray(cv_image)
 
 def cleanup():
     cv2.destroyAllWindows()

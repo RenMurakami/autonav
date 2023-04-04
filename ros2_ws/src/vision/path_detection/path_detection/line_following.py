@@ -153,7 +153,7 @@ class LineFollowing():
             begin = 0
             end = int(0.5 * original_image.shape[1])
 
-        # region of interest image to help find specific portion of the image
+        ## region of interest image to help find specific portion of the image
         section = np.zeros(original_image.shape, np.uint8)
         section[y:y + h, begin:end] = original_image[y:y + h, begin:end]
 

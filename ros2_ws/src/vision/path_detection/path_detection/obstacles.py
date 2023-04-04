@@ -22,12 +22,11 @@ from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 
 import cv2, csv
-
-#from google.colab.patches import cv2_imshow
-#from PIL import Image, ImageOps
 from numpy import asarray
 from PIL import ImageOps
-from numpy import genfromtxt
+import time
+from cv_bridge import CvBridge
+from utils.utils import *
 
 @dataclass
 class Circle:
@@ -286,49 +285,69 @@ class TransformPublisher(Node):
 
         #***************************************************************
 
+        self.get_logger().info('**********************')
+        t1 = time.time()
+        kernel = np.ones((5,5),np.uint8)
+        ksize = (5,5)
+
+        #image = Image.open('3m.jpg')
+        #image = cv2.imread('3m.jpg')
+
+        bridge = CvBridge()
+        #cv_image = bridge.imgmsg_to_cv2(image, desired_encoding='passthrough')
+
         # Convert the image to grayscale
-        img_gray = ImageOps.grayscale(image)
+        img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # Invert the image (black becomes white, white becomes black)
-        img_inv = ImageOps.invert(img_gray)
+        img_inv = abs(img_gray - 255)
 
         # Color the non-black spots more white
         factor = 1.5  # Change this factor to adjust the degree of whitening
-        img_white = ImageOps.autocontrast(img_inv, cutoff=0, ignore=255).point(lambda i: i*factor)
+        img_white = ImageOps.autocontrast(from_array(img_inv), cutoff=0, ignore=255).point(lambda i: i*factor)
 
-        # Save the result
-        #img_white.save("result.jpg")
-
-        #Data (Original for cv2)
-        # Convert image to numpy array
         numpydata = np.array(img_white)
 
-        # Apply Gaussian blur to reduce noise
-        blur = cv2.GaussianBlur(numpydata, (5, 5), 0)
+        #removing other componets
+        (thresh, blackAndWhiteImage) = cv2.threshold(numpydata, 127, 255, cv2.THRESH_BINARY)
 
-        kernel = np.ones((5,5),np.uint8)
-        ksize = (5,5)
-        M = cv2.getStructuringElement(cv2.MORPH_CROSS, ksize);
+        # HSV filtering
+        #grey = hsv_filter(image, use_white=True)
+        dilation = cv2.dilate(blackAndWhiteImage,kernel,iterations = 10)
+        erosion = cv2.erode(dilation,kernel,iterations = 10)
 
-        dilation = cv2.dilate(blur,kernel,iterations = 25)
-        erosion = cv2.erode(dilation,kernel,iterations = 25)
-        opening = cv2.morphologyEx(erosion, cv2.MORPH_OPEN, M)
-        numpydata = opening
-        #numpydata = cv2.resize(numpydata,(2016,1512))
+        closing = cv2.morphologyEx(erosion, cv2.MORPH_CLOSE, kernel)
+
 
         # Apply HoughCircles to detect circles
-        circles = cv2.HoughCircles(numpydata, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=0, maxRadius=0)
+        circles = cv2.HoughCircles(closing, cv2.HOUGH_GRADIENT_ALT, 1, 1, param1=100, param2=0.1, minRadius=100, maxRadius=0)
+        color = (0, 255, 0)
+        markerType = cv2.MARKER_CROSS
+        markerSize = 90
+        thickness = 50
 
+        im_rgb = cv2.cvtColor(closing, cv2.COLOR_BGR2RGB)
+        t2=time.time()
         # Draw detected circles on the original image
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
+            i =0
             for (x, y, r) in circles:
-                cv2.circle(numpydata, (x, y), r, (0, 255, 0), 2)
+                cv2.circle(im_rgb, (x, y), r, (0, 0, 0), 2)
+                print(x, y, r)
+                i=i+1
+                cv2.drawMarker(im_rgb, (x, y), color, markerType, markerSize, thickness)
 
-        # Display the final image
-        cv2.imwrite('renTestImage',numpydata)
-        morph = numpydata
-        self.get_logger().info('**********************')
+        t3=time.time()
+        print('time before loop')
+        print(t2-t1)
+        print('time after loop')
+        print(t3-t1)
+        print("loop took:")
+        print(t3-t2)
+        cv2.imwrite("originN.png", im_rgb)
+        image = bridge_image(im_rgb, "bgr8")
+        morph = im_rgb
 
         #*************************************************************
 
