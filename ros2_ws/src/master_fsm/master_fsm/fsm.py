@@ -191,15 +191,6 @@ class MainRobot(Node):
             # self.state_msg.data = STATE.GPS_NAVIGATION
             # self.state_pub.publish(self.state_msg)
             # self.gps_navigation_state()
-            light_msg = LightCmd()
-            light_msg.type = 'B'
-            light_msg.on = True
-            self.lights_pub.publish(light_msg)
-            time.sleep(.10)
-            light_msg = LightCmd()
-            light_msg.type = 'B'
-            light_msg.on = False
-            self.lights_pub.publish(light_msg)
 
         elif self.obj_seen:  # object sighted - switch to obstacle avoidance
             # We check for an object second because if we have already hit the
@@ -246,6 +237,8 @@ class MainRobot(Node):
                 self.waypoint_count = (self.waypoint_count + 1) % self.waypoints_len
             else:
                 self.waypoint_count += 1
+
+            self.lights_pub.publish(light_msg)
             self.waypoint_found = False
             self.exit_heading = self.target_heading
             self.heading_restored = False
@@ -1008,7 +1001,7 @@ class MainRobot(Node):
             self.exit_heading = self.target_heading
             gps_curr = self.heading*direction_var
             gps_exit = self.exit_heading*direction_var
-            if sub_angles(gps_curr, gps_exit) >= 0 or sub_angles(gps_exit, gps_curr) < math.pi/6:
+            if sub_angles(gps_curr, gps_exit) >= 0 and sub_angles(gps_exit, gps_curr) < math.pi/24:
                 self.get_logger().info(f"Heading restored with heading {gps_curr*direction_var}"
                                        f" and goal {gps_exit*direction_var}")
                 self.heading_restored = True
