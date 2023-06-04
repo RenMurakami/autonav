@@ -60,7 +60,7 @@ class Lines(Node):
         self.declare_parameter('/Debug', True)
         self.declare_parameter('/UseYellow', False)
 
-        self.get_logger().warning(f"STARTUP { self.get_parameter('/UseYellow').value,}")
+        self.get_logger().warning(f"STARTUP { self.get_parameter('/UseYellow').value}")
 
         # Initialize Classes
         self.line_detection = LineDetection(
