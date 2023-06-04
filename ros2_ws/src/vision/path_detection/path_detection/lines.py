@@ -49,6 +49,7 @@ class Lines(Node):
         self.declare_parameter('/LineDetectBufferSize', 5)
         self.declare_parameter('/LineDetectBufferFill', 0.6)
         self.declare_parameter('/LineDetectCropTop', 0.0)
+        self.declare_parameter('/LineApproachCropTop', 0.0)
         self.declare_parameter('/LineDetectCropBottom', 0.2)
         self.declare_parameter('/LineDetectCropSide', 0.2)
         self.declare_parameter('/LineDetectMaxWhite', 0.5)
@@ -69,6 +70,7 @@ class Lines(Node):
             self.get_parameter('/LineDetectBufferSize').value,
             self.get_parameter('/LineDetectBufferFill').value,
             self.get_parameter('/LineDetectCropTop').value,
+            self.get_parameter('/LineApproachCropTop').value,
             self.get_parameter('/LineDetectCropBottom').value,
             self.get_parameter('/LineDetectCropSide').value,
             self.get_parameter('/LineDetectMaxWhite').value,

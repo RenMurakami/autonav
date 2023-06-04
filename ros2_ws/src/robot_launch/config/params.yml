@@ -43,10 +43,11 @@
 
 /lines:
     ros__parameters:
-        /LineDetectCropTop:         0.1         # fraction to remove
+        /LineDetectCropTop:         .05         # fraction to remove
+        /LineApproachCropTop:       .45
         /LineDetectCropBottom:      .2
         /LineDetectCropSide:        .2
-        /LineDetectDistance:        1.05
+        /LineDetectDistance:        1.05        # needs cleaned out but avoiding breakage currently
         /Debug:                     True
 
 
@@ -79,16 +80,6 @@
         ## Practice Coordinates
         /PracticeInitialLat:   39.4483377 # invalid
         /PracticeInitialLon:   -83.4879768 # invalid
-
-        # latitudes and longitudes are in overall lats lons
-#        /PracticeWaypointLat1: 42.40092709166667
-#        /PracticeWaypointLon1: -83.13107524
-#        /PracticeWaypointLat2: 42.40085157666667
-#        /PracticeWaypointLon2: -83.13106738666667
-#        /PracticeWaypointLat3: 42.400776035
-#        /PracticeWaypointLon3: -83.1310595933333
-#        /PracticeWaypointLat4: 39.4478321
-#        /PracticeWaypointLon4: -83.48781989999999
 
         ## Real Coordinates
         /InitialLat: 0.0
