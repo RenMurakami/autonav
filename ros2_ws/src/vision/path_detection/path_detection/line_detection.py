@@ -17,7 +17,7 @@ from utils.utils import *
 
 
 class LineDetection():
-    def __init__(self, buffersize, bufferfill, croptop, cropbottom, cropside, maxwhite, minslope, linelength, linedistance, debug, use_yellow):
+    def __init__(self, buffersize, bufferfill, croptop, cropbottom, cropside, maxwhite, minslope, linelength, linedistance, debug, use_yellow, followingdirection):
         # super().__init__('detection')
         self.history_idx = 0
         self.slope = None
@@ -34,6 +34,7 @@ class LineDetection():
         self.MIN_SLOPE = minslope
         self.MIN_LINE_LENGTH = linelength
         self.LINE_DISTANCE = linedistance
+        self.FOLLOWING_DIRECTION = followingdirection
         self.line_history = [0] * self.BUFF_SIZE
 
         self.debug = debug
@@ -112,9 +113,11 @@ class LineDetection():
         return False
 
     def determine_orientation(self):
-        # self.get_logger().info(f"Slope {self.slope}")
+        self.get_logger().info(f"Slope {self.slope}")
 
-        if self.found_line and self.slope >= self.MIN_SLOPE:
+        if self.found_line and \
+        ((self.slope >= self.MIN_SLOPE and self.FOLLOWING_DIRECTION == DIRECTION.LEFT) or \
+        (self.slope <= -self.MIN_SLOPE and self.FOLLOWING_DIRECTION == DIRECTION.RIGHT)):
             self.aligned = True
             return True
         return False

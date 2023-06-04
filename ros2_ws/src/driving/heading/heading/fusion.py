@@ -52,8 +52,8 @@ class Fusion(Node):
     def state_callback(self, new_state):
         self.state = new_state.data
         if self.state == STATE.ORIENT_TO_GPS:
-            self.imu_weight = 0.0
-            self.encoder_weight = 1.0
+            self.imu_weight = 0.5
+            self.encoder_weight = 0.5
         else:
             self.imu_weight = self.get_parameter('/ImuWeight').value
             self.encoder_weight = self.get_parameter('/EncoderWeight').value

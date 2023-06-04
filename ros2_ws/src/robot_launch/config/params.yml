@@ -120,6 +120,6 @@
     ros__parameters:
         /ExitAngle:                 0.4  # +/- angle range we need to achieve to leave obstacle avoidance and return to GPS mode. radians = 22.9183 degrees
         ## Heading Weights -- note that GPS weight is 1 - EncoderWeight - ImuWeight
-        /EncoderWeight:             0.3
+        /EncoderWeight:             0.2
         /ImuWeight:                 0.5
         /Debug:                     False

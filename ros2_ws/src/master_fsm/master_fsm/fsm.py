@@ -191,6 +191,15 @@ class MainRobot(Node):
             # self.state_msg.data = STATE.GPS_NAVIGATION
             # self.state_pub.publish(self.state_msg)
             # self.gps_navigation_state()
+            light_msg = LightCmd()
+            light_msg.type = 'B'
+            light_msg.on = True
+            self.lights_pub.publish(light_msg)
+            time.sleep(.10)
+            light_msg = LightCmd()
+            light_msg.type = 'B'
+            light_msg.on = False
+            self.lights_pub.publish(light_msg)
 
         elif self.obj_seen:  # object sighted - switch to obstacle avoidance
             # We check for an object second because if we have already hit the
@@ -200,15 +209,6 @@ class MainRobot(Node):
             self.state_msg.data = STATE.LINE_TO_OBJECT
             self.state_pub.publish(self.state_msg)
 
-            # light_msg = LightCmd()
-            # light_msg.type = 'B'
-            # light_msg.on = True
-            # self.lights_pub.publish(light_msg)
-            # time.sleep(.10)
-            # light_msg = LightCmd()
-            # light_msg.type = 'B'
-            # light_msg.on = False
-            # self.lights_pub.publish(light_msg)
 
             self.prev_heading = self.heading
             self.exit_heading = sub_angles(self.prev_heading, (1-2*int(self.follow_dir==DIRECTION.RIGHT))*self.exit_angle)
@@ -446,15 +446,15 @@ class MainRobot(Node):
 
     # Object Avoidance to Line Following Transition State - is gps needed here?
     def object_to_line_state(self):
-        light_msg = LightCmd()
-        light_msg.type = 'B'
-        light_msg.on = True
-        self.lights_pub.publish(light_msg)
-        time.sleep(.10)
-        light_msg = LightCmd()
-        light_msg.type = 'B'
-        light_msg.on = False
-        self.lights_pub.publish(light_msg)
+        # light_msg = LightCmd()
+        # light_msg.type = 'B'
+        # light_msg.on = True
+        # self.lights_pub.publish(light_msg)
+        # time.sleep(.10)
+        # light_msg = LightCmd()
+        # light_msg.type = 'B'
+        # light_msg.on = False
+        # self.lights_pub.publish(light_msg)
         # self.get_logger().info("Object to Line Transition State")
 
         # Gradual Turn

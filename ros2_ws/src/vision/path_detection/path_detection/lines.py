@@ -53,10 +53,7 @@ class Lines(Node):
         self.declare_parameter('/LineDetectCropSide', 0.2)
         self.declare_parameter('/LineDetectMaxWhite', 0.5)
         # commented if statement out for testing
-        if self.get_parameter('/FollowingDirection').value == DIRECTION.LEFT:
-            self.declare_parameter('/LineDetectMinSlope', 1.25)
-        else:
-            self.declare_parameter('/LineDetectMinSlope', -1.25)
+        self.declare_parameter('/LineDetectMinSlope', 1.25)
         self.declare_parameter('/LineDetectMinLineLength', 0.35)
         self.declare_parameter('/LineDetectDistance', 1.25)
         self.declare_parameter('/Debug', True)
@@ -76,7 +73,8 @@ class Lines(Node):
             self.get_parameter('/LineDetectMinLineLength').value,
             self.get_parameter('/LineDetectDistance').value,
             self.get_parameter('/Debug').value,
-            self.get_parameter('/UseYellow').value
+            self.get_parameter('/UseYellow').value,
+            self.get_parameter('/FollowingDirection').value
         )
         self.line_following = LineFollowing(
             self.get_parameter('/FollowingDirection').value,
