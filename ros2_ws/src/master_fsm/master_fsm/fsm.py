@@ -350,7 +350,8 @@ class MainRobot(Node):
             self.waypoint_found = False
             self.get_logger().info("WAYPOINT FOUND IN FSM!!")
 
-            if self.waypoint_count == self.waypoints_len or not self.get_parameter('/CrossRampInGps').value:
+            if self.waypoint_count == self.waypoints_len \
+                    or not self.get_parameter('/CrossRampInGps').value and self.waypoint_count == self.waypoints_len // 2:
                 # just take this step if not using nav across ramp
                 self.state_msg.data = STATE.GPS_EXIT
                 self.state_pub.publish(self.state_msg)
