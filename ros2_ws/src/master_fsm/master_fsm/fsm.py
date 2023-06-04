@@ -818,11 +818,11 @@ class MainRobot(Node):
             self.object_to_line_state()  # enter the transition state
         """
     def pothole_to_line(self):
-        self.get_logger().info("pothole_to_line");
+        self.get_logger().info("pothole_to_line")
         self.get_logger().info(f"straight: now left: {self.encoder_left_raw}, target left: {self.pothole_left_target}\
                                ,now right: {self.encoder_right_raw}, target right: {self.pothole_right_target}")
         if self.encoder_left_raw < self.pothole_left_target or self.encoder_right_raw < self.pothole_right_target:
-            # test to make sure we're adjusting if we'er not going straight
+            # test to make sure we're adjusting if we're not going straight
             delta_left = self.pothole_left_target - self.encoder_left_raw
             delta_right = self.pothole_right_target - self.encoder_right_raw
             
