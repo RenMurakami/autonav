@@ -187,6 +187,8 @@ class MainRobot(Node):
             self.state_msg.data = STATE.ORIENT_TO_GPS
             self.state_pub.publish(self.state_msg)
             self.orient_to_gps_state()
+
+            self.get_logger().info("SWITCHING FROM LINE FOLLOWING 191")
             # self.state = STATE.GPS_NAVIGATION
             # self.state_msg.data = STATE.GPS_NAVIGATION
             # self.state_pub.publish(self.state_msg)
@@ -223,11 +225,11 @@ class MainRobot(Node):
 
     # Object Avoidance From Line Following State - trying to get back to line
     def object_avoidance_from_line_state(self):
-        if self.heading_restored:
-            light_msg = LightCmd()
-            light_msg.type = 'G'
-            light_msg.on = True
-            self.lights_pub.publish(light_msg)
+        # if self.heading_restored:
+            # light_msg = LightCmd()
+            # light_msg.type = 'G'
+            # light_msg.on = True
+            # self.lights_pub.publish(light_msg)
 
 
         # self.get_logger().info("Object Avoidance From Line Following State")
@@ -238,7 +240,8 @@ class MainRobot(Node):
             else:
                 self.waypoint_count += 1
 
-            self.lights_pub.publish(light_msg)
+            self.get_logger().info("WAYPOINT FOUND WHILE IN OBSTACLE fsm 241")
+
             self.waypoint_found = False
             self.exit_heading = self.target_heading
             self.heading_restored = False
@@ -265,18 +268,6 @@ class MainRobot(Node):
 
 
         elif self.found_line and self.heading_restored:  # and self.look_for_line
-            # light_msg = LightCmd()
-            # light_msg.type = 'B'
-            # light_msg.on = True
-            # self.lights_pub.publish(light_msg)
-            # time.sleep(.10)
-            # light_msg.on = False
-            # self.lights_pub.publish(light_msg)
-            light_msg = LightCmd()
-            light_msg.type = 'G'
-            light_msg.on = False
-            self.lights_pub.publish(light_msg)
-
             self.look_for_line = False
             self.found_line = False
             self.heading_restored = False
@@ -288,6 +279,10 @@ class MainRobot(Node):
     # Object Avoidance From GPS Navigation State
     def object_avoidance_from_gps_state(self):
         # self.get_logger().info("Object Avoidance From GPS State")
+        light_msg = LightCmd()
+        light_msg.type = 'G'
+        light_msg.on = True
+        self.lights_pub.publish(light_msg)
 
         # Check for another object in front of the robot
         if self.obj_seen:
@@ -326,14 +321,10 @@ class MainRobot(Node):
         # self.get_logger().info("GPS Navigation State")
         # After looking for an obstacle, see if we have arrived
         # turn light off so should blink at first waypoint
-        # light_msg = LightCmd()
-        # light_msg.type = 'G'
-        # light_msg.on = False
-        # self.lights_pub.publish(light_msg)
-        # light_msg = LightCmd()
-        # light_msg.type = 'B'
-        # light_msg.on = False
-        # self.lights_pub.publish(light_msg)
+        light_msg = LightCmd()
+        light_msg.type = 'G'
+        light_msg.on = True
+        self.lights_pub.publish(light_msg)
 
         if self.waypoint_found:
             if self.get_parameter('/RepeatGps').value:
@@ -422,10 +413,6 @@ class MainRobot(Node):
 
         elif self.path_clear:
              self.path_clear = False
-             light_msg = LightCmd()
-             light_msg.type = 'G'
-             light_msg.on = False
-             self.lights_pub.publish(light_msg)
              self.obj_seen = False
              self.state_msg.data = STATE.OBJECT_AVOIDANCE_FROM_LINE
              self.state_pub.publish(self.state_msg)
@@ -506,10 +493,6 @@ class MainRobot(Node):
         self.wheel_pub.publish(self.wheel_msg)
         if self.path_clear:
             self.path_clear = False
-            light_msg = LightCmd()
-            light_msg.type = 'G'
-            light_msg.on = False
-            self.lights_pub.publish(light_msg)
             self.state_msg.data = STATE.OBJECT_AVOIDANCE_FROM_GPS
             self.state_pub.publish(self.state_msg)
             self.state = STATE.OBJECT_AVOIDANCE_FROM_GPS
@@ -571,12 +554,12 @@ class MainRobot(Node):
     def orient_to_gps_state(self):
         self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{3},{6*(-1+2*int(self.follow_dir==DIRECTION.LEFT))}"
         self.wheel_pub.publish(self.wheel_msg)
+        light_msg = LightCmd()
+        light_msg.type = 'G'
+        light_msg.on = True
+        self.lights_pub.publish(light_msg)
 
         if self.heading_restored:
-            light_msg = LightCmd()
-            light_msg.type = 'G'
-            light_msg.on = False
-            self.lights_pub.publish(light_msg)
             self.heading_restored = False
             self.state = STATE.GPS_NAVIGATION
             self.state_msg.data = STATE.GPS_NAVIGATION
@@ -1097,10 +1080,6 @@ class MainRobot(Node):
 
             elif lidar_event.data == STATUS.PATH_CLEAR and self.state in self.transition_set:
                 self.path_clear = True
-                light_msg = LightCmd()
-                light_msg.type = 'G'
-                light_msg.on = True
-                self.lights_pub.publish(light_msg)
                 self.obj_seen = False
                 light_msg = LightCmd()
                 light_msg.type = 'Y'

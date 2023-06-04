@@ -87,6 +87,8 @@ class Fusion(Node):
         try:
             # calculate IMU heading
             self.imu_curr_heading =  (imu_msg.euler_x - self.imu_initial_heading + self.get_parameter('/InitialHeading').value)*math.pi/180
+            if self.imu_curr_heading > math.pi:
+                self.imu_curr_heading -= 2*math.pi
 
             # calculate weighted current heading
             diff = sub_angles(self.curr_heading, self.imu_curr_heading)
@@ -148,26 +150,27 @@ class Fusion(Node):
             self.encoder_weight = 0.0
 
         # calculate weighted current heading
-        diff = sub_angles(self.curr_heading, gps_msg.current_heading)
-        self.curr_heading = (self.curr_heading - diff*(1 - self.encoder_weight - self.imu_weight)) % (2*math.pi)
-        if self.curr_heading > math.pi:
-            self.curr_heading -= 2*math.pi
-        self.distance_from_waypoint = gps_msg.distance
+        if not -0.01 < gps_msg.current_heading < 0.01:
+            diff = sub_angles(self.curr_heading, gps_msg.current_heading)
+            self.curr_heading = (self.curr_heading - diff*(1 - self.encoder_weight - self.imu_weight)) % (2*math.pi)
+            if self.curr_heading > math.pi:
+                self.curr_heading -= 2*math.pi
+            self.distance_from_waypoint = gps_msg.distance
 
-        # construct and publish heading message
-        heading_msg = HeadingStatus()
-        heading_msg.current_heading = self.curr_heading
-        heading_msg.target_heading = self.target_heading
-        heading_msg.distance = self.distance_from_waypoint
-        self.fused_pub.publish(heading_msg)
-        self.publish_to_motors()
+            # construct and publish heading message
+            heading_msg = HeadingStatus()
+            heading_msg.current_heading = self.curr_heading
+            heading_msg.target_heading = self.target_heading
+            heading_msg.distance = self.distance_from_waypoint
+            self.fused_pub.publish(heading_msg)
+            self.publish_to_motors()
 
-        if self.get_parameter('/Debug').value:
-            self.get_logger().warning("Current GPS HEADING: " + str(gps_msg.current_heading) + '\n' +
-                                      "Current Encoder Heading: " + str(self.encoder_curr_heading) + '\n' +
-                                      "Current IMU Heading: " + str(self.imu_curr_heading) + '\n' +
-                                      "Current Weighted Heading " + str(self.curr_heading) + '\n' +
-                                      "Target Heading: " + str(gps_msg.target_heading) + '\n')
+            if self.get_parameter('/Debug').value:
+                self.get_logger().warning("Current GPS HEADING: " + str(gps_msg.current_heading) + '\n' +
+                                          "Current Encoder Heading: " + str(self.encoder_curr_heading) + '\n' +
+                                          "Current IMU Heading: " + str(self.imu_curr_heading) + '\n' +
+                                          "Current Weighted Heading " + str(self.curr_heading) + '\n' +
+                                          "Target Heading: " + str(gps_msg.target_heading) + '\n')
 
 
 def main(args=None):

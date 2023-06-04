@@ -76,7 +76,7 @@ class LineDetection():
         found_line = self.determine_state()
         aligned = self.determine_orientation()
 
-        return found_line, aligned
+        return found_line, aligned, self.slope
 
     def determine_line(self, image, state):
         if state == "OBJECT_TO_LINE":
@@ -96,7 +96,7 @@ class LineDetection():
         return False, [0, 0, 0, 0]
 
     def get_slope(self, x1, y1, x2, y2):
-        return float(abs(y2-y1)) / float(abs(x2-x1)+0.00001)
+        return float((y2-y1)) / float((x2-x1)+0.00001)
 
     def get_distance(self, y, x, coords):
         x1, y1, x2, y2 = coords
@@ -114,11 +114,11 @@ class LineDetection():
         return False
 
     def determine_orientation(self):
-        self.get_logger().info(f"Slope {self.slope}")
+        # self.get_logger().info(f"Slope {self.slope}")
 
         if self.found_line and \
-        ((self.slope >= self.MIN_SLOPE and self.FOLLOWING_DIRECTION == DIRECTION.LEFT) or \
-        (self.slope <= -self.MIN_SLOPE and self.FOLLOWING_DIRECTION == DIRECTION.RIGHT)):
+        ((self.slope >= self.MIN_SLOPE and self.FOLLOWING_DIRECTION == DIRECTION.RIGHT) or \
+        (self.slope <= -self.MIN_SLOPE and self.FOLLOWING_DIRECTION == DIRECTION.LEFT)):
             self.aligned = True
             return True
         return False

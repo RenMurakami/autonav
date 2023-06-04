@@ -68,7 +68,6 @@ class TransformPublisher(Node):
         self.state = STATE.LINE_FOLLOWING
 
         # lidar parameters
-        self.declare_parameter("/UseLidarFlattening", False)         # radians = 165.0575 degrees
         self.declare_parameter("/LIDARTrimMin", 2.8808)         # radians = 165.0575 degrees
         self.declare_parameter("/LIDARTrimMax", 0.2576)         # radians = 14.7 degrees
         self.declare_parameter("/ObstacleFOV", math.pi/6)       #
@@ -125,7 +124,7 @@ class TransformPublisher(Node):
         try:
             return distances / count
         except ZeroDivisionError:
-            self.get_logger().info("ZERO DIVISION ERROR")
+            # self.get_logger().info("ZERO DIVISION ERROR")
             return max_distance + .75  # parameterize later
 
     # new def to squash bad values and to detect and paint a plane on each barricade/barrel
@@ -311,6 +310,11 @@ class TransformPublisher(Node):
             follow_dist = self.get_parameter("/ObstacleDetectDistance").value *3/4
         else:
             follow_dist = self.get_parameter("/ObstacleDetectDistance").value
+
+
+        half_FOV = self.get_parameter('/ObstacleFOV').value / 2
+        right_FOV = (math.pi / 2) - half_FOV
+        left_FOV = (math.pi / 2) + half_FOV
         for i in range(len(scan.ranges)):
             if right_FOV < i * scan.angle_increment < left_FOV:
                 if scan.ranges[i] < follow_dist:
