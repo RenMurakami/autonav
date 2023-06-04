@@ -62,6 +62,22 @@ class LineDetection():
         if np.count_nonzero(image) < image.shape[0]*image.shape[1]*self.MAX_WHITE:
             # Open Image
             morph = cv2.morphologyEx(image, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7)))
+            
+            # Ren's additional filter
+            #****************************************************************
+            # need to adjust the size according to the camera
+            kernel = np.ones((5, 5), np.uint8) 
+
+            img_dilation = cv2.dilate(morph, kernel, iterations=10)
+            erode=cv2.erode(img_dilation, kernel, iterations=10)
+            erode=cv2.erode(erode, kernel, iterations=10)
+            img_dilation = cv2.dilate(erode, kernel, iterations=13)
+            morph = img_dilation
+
+            # Comment out this line in the future
+            cv_display(morph, 'LineFilter', self.window_handle)
+            #****************************************************************
+
             line, coords = self.determine_line(morph, state)
             if self.debug:
                 if line:
