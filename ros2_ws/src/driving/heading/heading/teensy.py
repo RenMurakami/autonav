@@ -73,7 +73,7 @@ class Teensy(Node):
 
         self.pid_line = PIDController(-0.050, 0.0, 0.0, 6, -6) # for line following
         self.pid_obj = PIDController(3.3, 0.0, 0.0, 8, -8)   # for object avoidance - was 1.5
-        self.pid_gps = PIDController(1.3, 0.0, 0.0, 8, -8)  # for during gps navigation
+        self.pid_gps = PIDController(3.0, 0.0, 0.2, 8, -8)  # for during gps navigation
 
         # encoder parameters
         self.unitChange = 1  # assuming passed in meters, need mm
