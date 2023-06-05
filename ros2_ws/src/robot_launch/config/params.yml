@@ -1,20 +1,22 @@
 # ros2 bag record -o bags/run06062200950 /camera/color/image_raw /gps_heading /scan /rosout
 /**:
     ros__parameters:
-        /RealCourse:         True
-        /FollowingDirection: 0          # 1  is right, 0 is left (line following)
+        /RealCourse:         False
+        /FollowingDirection: 1          # 1  is right, 0 is left (line following)
         /UseYellow:          False      # True for yellow lines, False for white lines
         # going north = 20, going south 200
-        /InitialHeading:     200.0      # robot's absolute initial heading. set before build in degrees.
+        /InitialHeading:     185.0      # robot's absolute initial heading. set before build in degrees.
         /NorthPointFirst:    False
         /GpsExitHeading:     0.0 #1.020304     # N, R: -2.121286; N, L: 2.3656318; S, R: -0.775958; S, L: 1.020304
         /CrossRampInGps:     True
         /RepeatGps:          False       # False = exit GPS mode after 4 waypoints are found. True = stay in GPS mode
         /LineDist:           0.15        # Distance in meters to follow the line from
-        /StartState:         0          #3 GPS #0 Line
+        /StartState:         3          #3 GPS #0 Line
         # latitudes and longitudes of coordinates to use - assumes ramp will occur at middle two
-        /PracticeLats:       [42.40092709166667, 42.40085157666667, 42.40080157666667, 42.400776035]
-        /PracticeLons:       [-83.13107524, -83.13106738666667, -83.1310595933333, -83.1310595933333]
+#        /PracticeLats:       [42.40092709166667, 42.40085157666667, 42.40080157666667, 42.400776035]
+#        /PracticeLons:       [-83.13107524, -83.13106738666667, -83.1310595933333, -83.1310595933333]
+        /PracticeLats:       [42.40092709166667, 42.400776035]
+        /PracticeLons:       [-83.13107524, -83.1310595933333]
         /WaypointLats:       [42.40096900, 42.40088038666667, 42.40083898, 42.400749623333336]
         /WaypointLons:       [-83.13160718166666, -83.131620365, -83.131618495, -83.131591085]
 
@@ -24,7 +26,7 @@
     
         /TimerRate:  0.05                       # rate at which to check and do state specified behavior
         /TurnSpeed:  6 #5 #20
-        /SlightTurn: 6 #3 #18
+        /SlightTurn: 5 #3 #18
         /ExitAngle:  0.3  #1.15 #0.1
         # Encoder Box Following (state 11-12) Parameters
         /EncoderBoxTurnLeft: False # used to configure the turn direction. False -> turn right
@@ -98,7 +100,7 @@
         /TeensyEncodersPort:        '/dev/TEENSY_PORT'
         /TeensyBaudrate:            115200
         /TeensyUpdateDelay:         .05
-        /SideObjectDist:            0.15 # 0.85
+        /SideObjectDist:            0.3 # 0.85
         /LineSpeed:                 11.0
         /ObjectSpeed:               8.0
         /GpsSpeed:                  11.0
@@ -113,4 +115,4 @@
         ## Heading Weights -- note that GPS weight is 1 - EncoderWeight - ImuWeight
         /EncoderWeight:             0.2
         /ImuWeight:                 0.5
-        /Debug:                     False
+        /Debug:                     True

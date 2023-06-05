@@ -110,8 +110,9 @@ class Lines(Node):
 
         # Line Detection
         elif self.state in self.line_detection_states:
-            found_line, aligned = self.line_detection.image_callback(image, self.state)
+            found_line, aligned, slope = self.line_detection.image_callback(image, self.state)
             # self.get_logger().info(f"Finding: {found_line}, {aligned}")
+            # self.get_logger().info(f"Slope {slope}")
             close_windows(self.line_following.window_handle)
             # self.get_logger().warning("Line Detection")
             if found_line:
