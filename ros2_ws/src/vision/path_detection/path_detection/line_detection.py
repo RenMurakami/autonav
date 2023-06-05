@@ -84,7 +84,7 @@ class LineDetection():
                     x1, y1, x2, y2 = coords
                     morph = cv2.cvtColor(morph, cv2.COLOR_GRAY2RGB)
                     cv2.line(morph, (x1, y1), (x2, y2), (0, 255, 0), thickness=5)
-                cv_display(morph, 'Line Detection Opened Image', self.window_handle)
+                #cv_display(morph, 'Line Detection Opened Image', self.window_handle)
         else:
             # self.get_logger().warning("Oversaturated LineDetection Image")
             self.update_history(0)
