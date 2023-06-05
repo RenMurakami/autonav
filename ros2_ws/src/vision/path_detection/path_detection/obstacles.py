@@ -58,7 +58,7 @@ class TransformPublisher(Node):
         self.lights_pub = self.create_publisher(LightCmd, "light_events", 10)
 
         # Subscribe to the camera color image and unaltered laser scan
-        self.image_sub = self.create_subscription(Image, "/camera/color/image_raw", self.image_callback, 10)
+        # self.image_sub = self.create_subscription(Image, "/camera/color/image_raw", self.image_callback, 10)
         self.image_pub = self.create_publisher(String,"pothole_events",10)
         self.get_logger().info('Pothole set up')
         self.lidar_sub = self.create_subscription(LaserScan, '/scan', self.lidar_callback, 10)
@@ -308,6 +308,8 @@ class TransformPublisher(Node):
         count1 = 0
         if self.state == STATE.OBJECT_AVOIDANCE_FROM_LINE:
             follow_dist = self.get_parameter("/ObstacleDetectDistance").value *3/4
+        elif self.state == STATE.OBJECT_AVOIDANCE_FROM_GPS or self.state == STATE.GPS_NAVIGATION or self.state == STATE.GPS_TO_OBJECT:
+            follow_dist = self.get_parameter("/ObstacleDetectDistance").value
         else:
             follow_dist = self.get_parameter("/ObstacleDetectDistance").value
 

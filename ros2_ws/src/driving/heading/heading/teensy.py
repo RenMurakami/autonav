@@ -73,7 +73,7 @@ class Teensy(Node):
 
         self.pid_line = PIDController(-0.050, 0.0, 0.0, 6, -6) # for line following
         self.pid_obj = PIDController(3.3, 0.0, 0.0, 8, -8)   # for object avoidance - was 1.5
-        self.pid_gps = PIDController(3.0, 0.0, 0.2, 8, -8)  # for during gps navigation
+        self.pid_gps = PIDController(14.0, 0.0, 0.7, 8, -8)  # for during gps navigation
 
         # encoder parameters
         self.unitChange = 1  # assuming passed in meters, need mm
@@ -132,7 +132,7 @@ class Teensy(Node):
         self.serialPort.write("M,89,89,**".encode())
 
     def state_callback(self, new_state):
-        self.get_logger().info("New State Received: {}".format(new_state.data))
+        # self.get_logger().info("New State Received: {}".format(new_state.data))
         self.state = int(new_state.data)
 
         # effects internal FollowMode
@@ -210,7 +210,7 @@ class Teensy(Node):
             delta = delta if self.following_direction == DIRECTION.LEFT else -1 * delta
             linear = round(self.object_speed)
             angular = round(delta * 3/4)
-            self.get_logger().info(f"FOLLOWING OBJECT with delta {delta}, speed {linear}")
+            # self.get_logger().info(f"FOLLOWING OBJECT with delta {delta}, speed {linear}")
 
         elif self.following_mode == FollowMode.eeGps and msg[:3] == CODE.GPS_SENDER:
             parts = msg.split(',')
@@ -255,8 +255,7 @@ class Teensy(Node):
             # self.get_logger().info(f"handling {x}")
 
             self.send_speed(linear+89, angular+89)
-            self.get_logger().info(f"setting speeds: ({linear, angular})")
-            sleep(.02)
+            # self.get_logger().info(f"setting speeds: ({linear, angular})")
             self.send_speed(linear + 89, angular + 89)
 
 

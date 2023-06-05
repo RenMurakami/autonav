@@ -173,7 +173,7 @@ class GPS(Node):
             msg.data = STATUS.WAYPOINT_FOUND
             self.waypoint_itr = (self.waypoint_itr + 1) % len(self.target_loc)  # go to next waypoint goal
             self.gps_event_pub.publish(msg)
-            self.get_logger().info(f"WAYPOINT FOUND - SWITCH POINTS to {self.target_loc[self.waypoint_itr]}")
+            self.get_logger().info(f"WAYPOINT FOUND - SWITCH POINTS to {self.target_loc[self.waypoint_itr]}. CURRENT POINT {curr}")
 
         return dist_meters
 

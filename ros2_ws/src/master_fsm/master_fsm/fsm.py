@@ -206,7 +206,7 @@ class MainRobot(Node):
             self.prev_heading = self.heading
             self.exit_heading = sub_angles(self.prev_heading, (1-2*int(self.follow_dir==DIRECTION.RIGHT))*self.exit_angle)
 
-            self.get_logger().info(f"Current heading: {self.prev_heading}, exit heading: {self.exit_heading}")
+            # self.get_logger().info(f"Current heading: {self.prev_heading}, exit heading: {self.exit_heading}")
 
             self.line_to_object_state()  # enter the transition state
             
@@ -301,6 +301,16 @@ class MainRobot(Node):
             self.state_pub.publish(self.state_msg)
             self.pothole_turn_right()
 
+        elif self.waypoint_found and self.waypoint_count == self.waypoints_len:
+            self.waypoint_found = False
+
+            self.exit_heading = self.get_parameter('/InitialHeading').value
+
+            self.state_msg.data = STATE.OBJECT_AVOIDANCE_FROM_LINE
+            self.state_pub.publish(self.state_msg)
+            self.state = STATE.OBJECT_AVOIDANCE_FROM_LINE
+            self.object_avoidance_from_line_state()
+
         elif self.heading_restored:  # Otherwise see if have a clear path to the waypoint
             self.heading_restored = False
             self.state_msg.data = STATE.GPS_NAVIGATION
@@ -308,13 +318,6 @@ class MainRobot(Node):
             self.state = STATE.GPS_NAVIGATION
             self.gps_navigation_state()  # enter the gps navigation state
 
-        # might need a waypoint found here
-        elif self.waypoint_found and self.waypoint_count == self.waypoints_len:
-            self.waypoint_found = False
-            self.state_msg.data = STATE.OBJECT_AVOIDANCE_FROM_LINE
-            self.state_pub.publish(self.state_msg)
-            self.state = STATE.OBJECT_AVOIDANCE_FROM_LINE
-            self.object_avoidance_from_line_state()
 
     # GPS Navigation State
     def gps_navigation_state(self):
@@ -332,7 +335,7 @@ class MainRobot(Node):
             else:
                 self.waypoint_count += 1
             self.waypoint_found = False
-            self.get_logger().info("WAYPOINT FOUND IN FSM!!")
+            self.get_logger().info("WAYPOINT FOUND IN FSM in GPS Nav state!!")
 
             if self.waypoint_count == self.waypoints_len or not self.get_parameter('/CrossRampInGps').value:
                 # just take this step if not using nav across ramp
@@ -359,7 +362,7 @@ class MainRobot(Node):
             self.prev_heading = self.heading
             self.exit_heading = self.target_heading
 
-            self.get_logger().info(f"Current heading: {self.prev_heading}, exit heading: {self.exit_heading}")
+            # self.get_logger().info(f"Current heading: {self.prev_heading}, exit heading: {self.exit_heading}")
             self.gps_to_object_state()
 
         elif self.pothole_found and self.get_parameter('/PotholeEnable').value:
@@ -386,9 +389,9 @@ class MainRobot(Node):
                               f"{(-1 + 2*int(self.follow_dir==DIRECTION.LEFT)) * self.TURN_SPEED}"
         self.wheel_pub.publish(self.wheel_msg)
 
-        self.get_logger().info("In line to object state publishing:")
-        self.get_logger().info(f"{CODE.TRANSITION_CODE},{self.TURN_SPEED}," \
-                              f"{(-1 + 2*int(self.follow_dir==DIRECTION.LEFT)) * self.TURN_SPEED}")
+        # self.get_logger().info("In line to object state publishing:")
+        # self.get_logger().info(f"{CODE.TRANSITION_CODE},{self.TURN_SPEED}," \
+        #                       f"{(-1 + 2*int(self.follow_dir==DIRECTION.LEFT)) * self.TURN_SPEED}")
 
         if self.waypoint_found:
             if self.get_parameter('/RepeatGps').value:
@@ -441,9 +444,9 @@ class MainRobot(Node):
         self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.SLIGHT_TURN}," \
                             f"{round(0.8*(1-2*int(self.follow_dir==DIRECTION.RIGHT)) * (self.SLIGHT_TURN))}"
         self.wheel_pub.publish(self.wheel_msg)
-        self.get_logger().info("In object to line state publishing:")
-        self.get_logger().info(f"{CODE.TRANSITION_CODE},{self.SLIGHT_TURN}," \
-                                    f"{round(0.8*(1-2*int(self.follow_dir==DIRECTION.RIGHT)) * (self.SLIGHT_TURN))}")
+        # self.get_logger().info("In object to line state publishing:")
+        # self.get_logger().info(f"{CODE.TRANSITION_CODE},{self.SLIGHT_TURN}," \
+        #                             f"{round(0.8*(1-2*int(self.follow_dir==DIRECTION.RIGHT)) * (self.SLIGHT_TURN))}")
 
         # Just keep turning until we are parallel with the line
         if self.aligned:
@@ -587,7 +590,7 @@ class MainRobot(Node):
             self.pothole_turn_right()
 
     def gps_exit_state(self):
-        self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{8},{15*(-1+2*int(self.follow_dir==DIRECTION.RIGHT))}"
+        self.wheel_msg.data = f"{CODE.TRANSITION_CODE},{self.SLIGHT_TURN},{2*self.SLIGHT_TURN*(-1+2*int(self.follow_dir==DIRECTION.RIGHT))}"
         self.wheel_pub.publish(self.wheel_msg)
 
         if self.heading_restored:
@@ -599,6 +602,7 @@ class MainRobot(Node):
 
         elif self.obj_seen:
             self.obj_seen = False
+            self.exit_heading = self.get_parameter('/InitialHeading').value
             self.state = STATE.LINE_TO_OBJECT
             self.state_msg.data = STATE.LINE_TO_OBJECT
             self.state_pub.publish(self.state_msg)
@@ -996,7 +1000,7 @@ class MainRobot(Node):
                 self.exit_heading = self.target_heading
             orient_curr = self.heading
             orient_exit = self.exit_heading
-            if min(abs(sub_angles(orient_curr, orient_exit)), abs(sub_angles(orient_exit, orient_curr))) <= math.pi/24:
+            if min(abs(sub_angles(orient_curr, orient_exit)), abs(sub_angles(orient_exit, orient_curr))) <= math.pi/48:
                 self.get_logger().info(f"Heading restored with heading {orient_curr} and goal {orient_exit}")
                 self.heading_restored = True
             elif self.heading_restored:
@@ -1036,7 +1040,7 @@ class MainRobot(Node):
 
     # Callback for information coming from the GPS node
     def gps_callback(self, gps_event):
-        self.get_logger().info(f"Message from Fusion Node {gps_event}")
+        # self.get_logger().info(f"Message from Fusion Node {gps_event}")
 
         # Get the lock before proceeding
         self.lock.acquire()
